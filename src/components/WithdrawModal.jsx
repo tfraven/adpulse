@@ -8,8 +8,8 @@ export default function WithdrawModal({
   showToast 
 }) {
   const [method, setMethod] = useState('EasyPaisa');
-  const [accountTitle, setAccountTitle] = useState('Sajid Khan');
-  const [accountNumber, setAccountNumber] = useState('03001234567');
+  const [accountTitle, setAccountTitle] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
   const [amount, setAmount] = useState('1000');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');

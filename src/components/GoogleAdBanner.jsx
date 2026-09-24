@@ -3,7 +3,7 @@ import { ExternalLink, Info } from 'lucide-react';
 
 export default function GoogleAdBanner({ 
   slot = '1948201948', 
-  client = 'ca-pub-9482019482019482', 
+  client = 'ca-pub-4715061326676029', 
   format = 'auto',
   type = 'leaderboard', // 'leaderboard', 'rectangle', 'rewarded'
   title = 'Google AdSense Partner Network',

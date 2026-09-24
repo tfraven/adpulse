@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Clock, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { apiStartAd } from '../api';
 
 export default function AdModal({ 
   ad, 
   activePlan, 
+  user,
   onClose, 
   onComplete, 
   showToast 
@@ -12,16 +14,50 @@ export default function AdModal({
   const [isCompletedWatching, setIsCompletedWatching] = useState(false);
   const [num1, setNum1] = useState(Math.floor(Math.random() * 9) + 1);
   const [num2, setNum2] = useState(Math.floor(Math.random() * 9) + 1);
+  const [challengeToken, setChallengeToken] = useState(null);
   const [userAnswer, setUserAnswer] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
   const totalDuration = ad.duration_seconds || 10;
   const progressPercent = Math.min(100, Math.round(((totalDuration - secondsLeft) / totalDuration) * 100));
   const earningPerAd = activePlan ? Number(activePlan.earning_per_ad) : 0;
 
+  // Initialize secure session on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function initSession() {
+      if (!user?.id) {
+        setIsLoadingSession(false);
+        return;
+      }
+      try {
+        const res = await apiStartAd({ userId: user.id, adId: ad.id });
+        if (!isMounted) return;
+        if (res.success && res.challengeToken) {
+          setChallengeToken(res.challengeToken);
+          setNum1(res.num1);
+          setNum2(res.num2);
+          if (res.durationSeconds) {
+            setSecondsLeft(res.durationSeconds);
+          }
+        } else if (!res.success) {
+          setErrorMsg(res.message || 'Cannot start ad session.');
+        }
+      } catch (err) {
+        console.warn('Session init error:', err);
+      } finally {
+        if (isMounted) setIsLoadingSession(false);
+      }
+    }
+    initSession();
+    return () => { isMounted = false; };
+  }, [user?.id, ad.id]);
+
   // Countdown timer effect
   useEffect(() => {
+    if (isLoadingSession) return;
     if (secondsLeft <= 0) {
       setIsCompletedWatching(true);
       return;
@@ -32,18 +68,12 @@ export default function AdModal({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [secondsLeft]);
+  }, [secondsLeft, isLoadingSession]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    if (!userAnswer || isNaN(userAnswer)) {
-      setErrorMsg('Please enter a valid numeric answer.');
-      return;
-    }
-
-    const expected = num1 + num2;
-    if (parseInt(userAnswer) !== expected) {
-      setErrorMsg(`Incorrect answer (${userAnswer}). What is ${num1} + ${num2}?`);
+    if (userAnswer === '' || isNaN(userAnswer)) {
+      setErrorMsg('Please enter a valid numeric calculation answer.');
       return;
     }
 
@@ -54,11 +84,12 @@ export default function AdModal({
       await onComplete({
         adId: ad.id,
         watchedSeconds: totalDuration,
-        mathAnswer: parseInt(userAnswer),
-        expectedAnswer: expected
+        mathAnswer: parseInt(userAnswer, 10),
+        expectedAnswer: num1 + num2,
+        challengeToken
       });
     } catch (err) {
-      setErrorMsg(err.message || 'Verification failed');
+      setErrorMsg(err.message || 'Verification failed. Please try again.');
       setIsVerifying(false);
     }
   };
@@ -202,7 +233,9 @@ export default function AdModal({
             justifyContent: 'space-between'
           }}>
             <div style={{ fontSize: '0.82rem', color: '#9CA3AF' }}>
-              Watch progress: <strong>{progressPercent}%</strong>. Please do not close this window.
+              {isLoadingSession ? 'Initializing verified ad session...' : (
+                <>Watch progress: <strong>{progressPercent}%</strong>. Please do not close this window.</>
+              )}
             </div>
             <div style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 700 }}>
               Reward: +₨ {earningPerAd.toFixed(2)} → Earning Wallet

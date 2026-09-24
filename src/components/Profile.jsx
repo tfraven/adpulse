@@ -8,8 +8,8 @@ export default function Profile({
   onSignOut,
   showToast 
 }) {
-  const [fullName, setFullName] = useState(user?.full_name || 'Sajid Khan');
-  const [mobile, setMobile] = useState(user?.mobile || '+92 300 1234567');
+  const [fullName, setFullName] = useState(user?.full_name || '');
+  const [mobile, setMobile] = useState(user?.mobile || '');
   const [country, setCountry] = useState(user?.country || 'Pakistan');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -35,12 +35,23 @@ export default function Profile({
         </div>
 
         <div className="hero-plan-card" style={{ alignItems: 'center', textAlign: 'center' }}>
-          <img 
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" 
-            alt="Profile Avatar" 
-            className="avatar-img"
-            style={{ width: '70px', height: '70px', marginBottom: '10px' }} 
-          />
+          <div
+            style={{
+              width: '70px',
+              height: '70px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #10B981, #059669)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 900,
+              fontSize: '1.8rem',
+              color: '#fff',
+              margin: '0 auto 10px',
+            }}
+          >
+            {(user?.full_name || 'U')[0].toUpperCase()}
+          </div>
           <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 800 }}>{user?.full_name}</h4>
           <span style={{ fontSize: '0.8rem', color: '#10B981', fontWeight: 600 }}>
             ✓ Verified Account
@@ -83,7 +94,7 @@ export default function Profile({
               </label>
               <input 
                 type="email" 
-                value={user?.email || 'sajid.khan@example.com'} 
+                value={user?.email || ''} 
                 readOnly 
                 disabled 
                 className="form-input locked-input" 
@@ -127,7 +138,7 @@ export default function Profile({
               <label>Assigned Unique Referral Code</label>
               <input 
                 type="text" 
-                value={user?.referral_code || 'EARN9482'} 
+                value={user?.referral_code || ''} 
                 readOnly 
                 disabled 
                 className="form-input locked-input" 

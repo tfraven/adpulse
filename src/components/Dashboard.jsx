@@ -15,6 +15,7 @@ import GoogleAdBanner from './GoogleAdBanner';
 
 export default function Dashboard({ 
   user, 
+  isLoggedIn,
   wallets, 
   activePlan, 
   stats, 
@@ -22,13 +23,14 @@ export default function Dashboard({
   ads, 
   onStartWatch, 
   onOpenDeposit, 
-  onOpenWithdraw, 
+  onOpenWithdraw,
+  onClaimStreak,
   setActiveTab 
 }) {
   const adsWatchedToday = activePlan ? activePlan.ads_watched_today : (stats?.adsWatchedToday || 0);
-  const dailyLimit = activePlan ? activePlan.daily_limit : (stats?.dailyLimit || 50);
+  const dailyLimit = activePlan ? activePlan.daily_limit : (stats?.dailyLimit || 0);
   const adsRemaining = Math.max(0, dailyLimit - adsWatchedToday);
-  const earningPerAd = activePlan ? Number(activePlan.earning_per_ad) : 22.0;
+  const earningPerAd = activePlan ? Number(activePlan.earning_per_ad) : 0;
   const potentialEarnings = adsRemaining * earningPerAd;
 
   const quotaPercent = dailyLimit > 0 ? Math.min(100, Math.round((adsWatchedToday / dailyLimit) * 100)) : 0;
@@ -196,7 +198,7 @@ export default function Dashboard({
           </div>
           <p className="wallet-purpose">Daily login streak bonuses, milestone achievements & promo gifts.</p>
           <div className="wallet-action-row">
-            <button className="wallet-btn outline-btn" onClick={() => alert('Daily login bonus claimed! Keep your streak alive.')}>
+            <button className="wallet-btn outline-btn" onClick={onClaimStreak}>
               <Sparkles size={14} />
               <span>Claim Streak</span>
             </button>
@@ -243,7 +245,7 @@ export default function Dashboard({
             <span className="kpi-badge accent">Active Tier</span>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-value">{stats?.directReferrals || 14}</span>
+            <span className="kpi-value">{stats?.directReferrals ?? 0}</span>
             <span className="kpi-unit">Members</span>
           </div>
           <div className="kpi-foot">₨ {fmt(wallets?.referral_balance)} commission earned</div>
@@ -256,9 +258,9 @@ export default function Dashboard({
           </div>
           <div className="kpi-value-row">
             <span className="kpi-symbol">₨</span>
-            <span className="kpi-value">{fmt(stats?.totalEarnings || 28450.0)}</span>
+            <span className="kpi-value">{fmt(stats?.totalEarnings ?? 0)}</span>
           </div>
-          <div className="kpi-foot">Historical total ads: <strong>{stats?.totalHistoricalAds || 1293}</strong></div>
+          <div className="kpi-foot">Historical total ads: <strong>{stats?.totalHistoricalAds ?? 0}</strong></div>
         </div>
       </div>
 

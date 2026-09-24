@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { Users, Copy, Check, Sparkles, UserPlus } from 'lucide-react';
+import { Users, Copy, Check, Sparkles } from 'lucide-react';
 
 export default function Referrals({ 
   user, 
   wallets, 
   stats, 
-  onSimulateReferral, 
   showToast 
 }) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const referralCode = user?.referral_code || 'EARN9482';
-  const referralLink = `https://adpulse.network/register?ref=${referralCode}`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://adpulse.network';
+  const referralLink = `${origin}/register?ref=${referralCode}`;
 
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text);
@@ -98,7 +98,7 @@ export default function Referrals({
         <div className="kpi-card">
           <div className="kpi-top"><span className="kpi-title">Direct Referrals</span></div>
           <div className="kpi-value-row">
-            <span className="kpi-value">{stats?.directReferrals || 14}</span>
+            <span className="kpi-value">{stats?.directReferrals ?? 0}</span>
             <span className="kpi-unit">Members</span>
           </div>
           <div className="kpi-foot">Active team network</div>
@@ -139,10 +139,6 @@ export default function Referrals({
             <h4 className="panel-title">Direct Team Members</h4>
             <span className="panel-subtitle">Users who registered through your personal invite code</span>
           </div>
-          <button className="outline-glass-btn" onClick={onSimulateReferral} style={{ fontSize: '0.8rem' }}>
-            <UserPlus size={14} />
-            <span>+ Simulate New Referral</span>
-          </button>
         </div>
 
         <div className="table-responsive">

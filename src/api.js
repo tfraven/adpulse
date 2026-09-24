@@ -7,9 +7,16 @@ const BASE_URL = import.meta.env.VITE_API_URL || (
 
 async function apiFetch(path, options = {}) {
   const url = `${BASE_URL}${path}`;
+  const token = typeof window !== 'undefined' ? localStorage.getItem('adpulse_token') : null;
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
   try {
     const response = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...(options.headers || {})
+      },
       ...options,
     });
     return await response.json();
@@ -26,8 +33,8 @@ async function apiFetch(path, options = {}) {
 export const apiRegister = (data) =>
   apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) });
 
-export const apiLogin = (email) =>
-  apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email }) });
+export const apiLogin = (email, password) =>
+  apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
 
 export const apiGetProfile = (userId) =>
   apiFetch(`/auth/profile?userId=${userId}`);

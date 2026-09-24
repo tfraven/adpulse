@@ -48,9 +48,14 @@ function getStoredUser() {
     return null;
   }
 }
-function storeUser(user) {
-  if (user) localStorage.setItem('adpulse_user', JSON.stringify(user));
-  else localStorage.removeItem('adpulse_user');
+function storeUser(user, token) {
+  if (user) {
+    localStorage.setItem('adpulse_user', JSON.stringify(user));
+    if (token) localStorage.setItem('adpulse_token', token);
+  } else {
+    localStorage.removeItem('adpulse_user');
+    localStorage.removeItem('adpulse_token');
+  }
 }
 
 // ── Protected Route Wrapper ────────────────────────────────────────────────────
@@ -233,13 +238,13 @@ export default function App() {
   }, [isLoggedIn, user?.id]);
 
   // ── Auth handlers ──────────────────────────────────────────────────────────
-  const handleLogin = (userData) => {
-    storeUser(userData);
+  const handleLogin = (userData, token) => {
+    storeUser(userData, token);
     setUser(userData);
   };
 
   const handleLogout = () => {
-    storeUser(null);
+    storeUser(null, null);
     setUser(null);
     setWallets({ deposit_balance: 0, earning_balance: 0, referral_balance: 0, rewards_balance: 0, total_balance: 0 });
     setActivePlan(null);

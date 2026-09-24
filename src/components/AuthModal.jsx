@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, UserPlus, LogIn, Lock, AlertCircle, Check, Mail } from 'lucide-react';
+import { X, UserPlus, LogIn, Lock, AlertCircle, Check, Mail, Eye, EyeOff } from 'lucide-react';
 
 export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
@@ -7,12 +7,16 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
   // Register form state
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [mobile, setMobile] = useState('');
   const [country, setCountry] = useState('Pakistan');
   const [referralCode, setReferralCode] = useState('');
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -32,24 +36,33 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!loginEmail.trim()) {
-      setErrorMsg('Email address is required.');
+    if (!loginEmail.trim() || !loginPassword) {
+      setErrorMsg('Email and password are required.');
       return;
     }
     setIsSubmitting(true);
     setErrorMsg('');
     try {
-      await onLogin(loginEmail.trim());
+      await onLogin(loginEmail.trim(), loginPassword);
+      onClose();
     } catch (err) {
-      setErrorMsg(err.message || 'Sign in failed. Check your email and try again.');
+      setErrorMsg(err.message || 'Invalid email or password.');
       setIsSubmitting(false);
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!fullName || !email || !mobile || !country) {
+    if (!fullName || !email || !password || !mobile || !country) {
       setErrorMsg('All marked fields are required.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMsg('Passwords do not match.');
       return;
     }
     setIsSubmitting(true);
@@ -58,10 +71,12 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
       await onRegister({
         full_name: fullName,
         email,
+        password,
         mobile,
         country,
         referral_code: referralCode.trim(),
       });
+      onClose();
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed.');
       setIsSubmitting(false);
@@ -82,8 +97,8 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
               </h3>
               <span style={{ fontSize: '0.75rem', color: '#9CA3AF' }}>
                 {activeTab === 'login'
-                  ? 'Enter your registered email to access your account'
-                  : 'Register to start earning by watching ads'}
+                  ? 'Enter your credentials to access your account'
+                  : 'Register with password to secure your earnings'}
               </span>
             </div>
           </div>
@@ -121,9 +136,33 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
                   required
                   autoFocus
                 />
-                <span className="form-hint">
-                  Enter the email address you used when creating your account.
-                </span>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <Lock size={13} style={{ display: 'inline', marginRight: '5px' }} />
+                  Password *
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="form-input"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', color: '#9CA3AF', cursor: 'pointer'
+                    }}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
 
               {errorMsg && (
@@ -164,13 +203,7 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
               </div>
 
               <div className="form-group">
-                <label>
-                  Email Address *
-                  <span className="locked-badge">
-                    <Lock size={10} style={{ display: 'inline', marginRight: '3px' }} />
-                    Permanently Uneditable Once Set
-                  </span>
-                </label>
+                <label>Email Address *</label>
                 <input
                   type="email"
                   value={email}
@@ -179,7 +212,31 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
                   className="form-input"
                   required
                 />
-                <span className="form-hint">Email cannot be modified after registration.</span>
+              </div>
+
+              <div className="form-row two-col">
+                <div className="form-group">
+                  <label>Password *</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Min 6 characters"
+                    className="form-input"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Confirm Password *</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    className="form-input"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="form-row two-col">
@@ -189,7 +246,7 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
                     type="tel"
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
-                    placeholder="03001234567"
+                    placeholder="03XXXXXXXXX"
                     className="form-input"
                     required
                   />
@@ -208,25 +265,19 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
                     <option value="Saudi Arabia">Saudi Arabia</option>
                     <option value="United Kingdom">United Kingdom</option>
                     <option value="United States">United States</option>
-                    <option value="Bangladesh">Bangladesh</option>
-                    <option value="India">India</option>
-                    <option value="Canada">Canada</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Malaysia">Malaysia</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Optional Referral Code</label>
+                <label>Referral Code (Optional)</label>
                 <input
                   type="text"
                   value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value)}
-                  placeholder="e.g. EARN9482 (Optional)"
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. EARN9482"
                   className="form-input"
                 />
-                <span className="form-hint">Enter your inviter's referral code to receive ₨ 100 Welcome Bonus!</span>
               </div>
 
               {errorMsg && (
@@ -237,20 +288,9 @@ export default function AuthModal({ onClose, onRegister, onLogin, showToast }) {
               )}
 
               <button type="submit" className="primary-gradient-btn full-width-btn" disabled={isSubmitting}>
-                <Check size={16} />
-                <span>{isSubmitting ? 'Creating Account...' : 'Register & Generate Unique Referral Code'}</span>
+                <UserPlus size={16} />
+                <span>{isSubmitting ? 'Creating Account...' : 'Create Account'}</span>
               </button>
-
-              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#9CA3AF', marginTop: '12px' }}>
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
-                  style={{ background: 'none', border: 'none', color: '#10B981', fontWeight: 700, cursor: 'pointer' }}
-                >
-                  Sign in →
-                </button>
-              </p>
             </form>
           )}
         </div>

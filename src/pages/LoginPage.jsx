@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  LogIn, Mail, AlertCircle, Zap, Eye, EyeOff,
+  LogIn, Mail, Lock, AlertCircle, Zap, Eye, EyeOff,
   Shield, TrendingUp, Users, Wallet
 } from 'lucide-react';
 import { apiLogin } from '../api';
@@ -9,26 +9,33 @@ import { apiLogin } from '../api';
 export default function LoginPage({ onLogin }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
-  const [showHint, setShowHint] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
       setErrorMsg('Please enter your registered email address.');
       return;
     }
+    if (!password) {
+      setErrorMsg('Please enter your account password.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg('');
+
     try {
-      const res = await apiLogin(trimmed);
+      const res = await apiLogin(cleanEmail, password);
       if (!res.success) throw new Error(res.message);
-      onLogin(res.user);
+      onLogin(res.user, res.token);
       navigate('/dashboard');
     } catch (err) {
-      setErrorMsg(err.message || 'Sign in failed. Please check your email and try again.');
+      setErrorMsg(err.message || 'Invalid email or password. Please verify and try again.');
       setIsSubmitting(false);
     }
   };
@@ -58,8 +65,8 @@ export default function LoginPage({ onLogin }) {
             Earn Real Money<br />Watching Ads
           </h2>
           <p className="auth-brand-sub">
-            Pakistan's most transparent PTC earning platform. 
-            Watch sponsored ads and get paid directly to your wallet.
+            Pakistan's premier high-yield PTC earning platform. 
+            Watch verified sponsored ads and get paid directly to your wallet.
           </p>
 
           <div className="auth-feature-list">
@@ -69,7 +76,7 @@ export default function LoginPage({ onLogin }) {
               </div>
               <div>
                 <div className="auth-feature-title">Earn Up to ₨ 45/Ad</div>
-                <div className="auth-feature-sub">Highest rates across 6 subscription tiers</div>
+                <div className="auth-feature-sub">Highest payouts across 6 tiered subscription plans</div>
               </div>
             </div>
             <div className="auth-feature-item">
@@ -87,7 +94,7 @@ export default function LoginPage({ onLogin }) {
               </div>
               <div>
                 <div className="auth-feature-title">10% Referral Commission</div>
-                <div className="auth-feature-sub">Instant credit on every plan activation</div>
+                <div className="auth-feature-sub">Instant cash credit on every team plan activation</div>
               </div>
             </div>
             <div className="auth-feature-item">
@@ -95,8 +102,8 @@ export default function LoginPage({ onLogin }) {
                 <Shield size={20} />
               </div>
               <div>
-                <div className="auth-feature-title">Instant Withdrawals</div>
-                <div className="auth-feature-sub">JazzCash & EasyPaisa in minutes</div>
+                <div className="auth-feature-title">Instant Payouts</div>
+                <div className="auth-feature-sub">JazzCash & EasyPaisa straight to your mobile account</div>
               </div>
             </div>
           </div>
@@ -117,7 +124,7 @@ export default function LoginPage({ onLogin }) {
           <div className="auth-form-header">
             <h1 className="auth-form-title">Welcome Back</h1>
             <p className="auth-form-subtitle">
-              Sign in to your AdPulse account to continue earning
+              Sign in with your email and password to access your earnings
             </p>
           </div>
 
@@ -139,20 +146,37 @@ export default function LoginPage({ onLogin }) {
                   autoFocus
                   required
                 />
+              </div>
+            </div>
+
+            <div className="auth-field-group">
+              <label className="auth-label">
+                <Lock size={14} />
+                Account Password
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
+                  placeholder="Enter your account password"
+                  className="auth-input"
+                  autoComplete="current-password"
+                  required
+                />
                 <button
                   type="button"
                   className="auth-input-toggle"
-                  onClick={() => setShowHint(!showHint)}
+                  onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
                 >
-                  {showHint ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {showHint && (
-                <span className="auth-field-hint">
-                  Enter the exact email you used during registration.
-                </span>
-              )}
+              <span className="auth-field-hint">
+                Demo accounts: default password is <strong>password123</strong>
+              </span>
             </div>
 
             {errorMsg && (
@@ -191,7 +215,6 @@ export default function LoginPage({ onLogin }) {
 
           <p className="auth-legal-text">
             By signing in, you agree to AdPulse's Terms of Service and Privacy Policy.
-            Your email is your permanent account identity and cannot be changed.
           </p>
         </div>
       </div>

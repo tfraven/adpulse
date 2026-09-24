@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  UserPlus, Lock, AlertCircle, Zap, Check,
+  UserPlus, Lock, AlertCircle, Zap, Check, Eye, EyeOff,
   Mail, Phone, Globe, Gift, ChevronRight
 } from 'lucide-react';
 import { apiRegister } from '../api';
@@ -19,6 +19,9 @@ export default function RegisterPage({ onLogin }) {
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [mobile, setMobile] = useState('');
   const [country, setCountry] = useState('Pakistan');
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
@@ -35,6 +38,14 @@ export default function RegisterPage({ onLogin }) {
     const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRx.test(email)) {
       setErrorMsg('Please enter a valid email address.');
+      return false;
+    }
+    if (!password || password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setErrorMsg('Passwords do not match. Please re-enter.');
       return false;
     }
     setErrorMsg('');
@@ -64,6 +75,7 @@ export default function RegisterPage({ onLogin }) {
       const res = await apiRegister({
         full_name: fullName.trim(),
         email: email.trim().toLowerCase(),
+        password,
         mobile: mobile.trim(),
         country,
         referral_code: referralCode.trim().toUpperCase(),
@@ -71,8 +83,8 @@ export default function RegisterPage({ onLogin }) {
 
       if (!res.success) throw new Error(res.message);
 
-      // Auto-login after registration
-      onLogin(res.user);
+      // Auto-login after registration with user & JWT token
+      onLogin(res.user, res.token);
       navigate('/dashboard');
     } catch (err) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
@@ -107,7 +119,7 @@ export default function RegisterPage({ onLogin }) {
             Start Earning<br />in 2 Minutes
           </h2>
           <p className="auth-brand-sub">
-            Create your free AdPulse account and receive a ₨ 100 welcome bonus instantly upon registration.
+            Create your secure AdPulse account and receive a ₨ 100 welcome bonus instantly upon registration.
           </p>
 
           {/* Steps */}
@@ -117,16 +129,16 @@ export default function RegisterPage({ onLogin }) {
                 {step > 1 ? <Check size={14} /> : '1'}
               </div>
               <div>
-                <div className="auth-step-title">Account Identity</div>
-                <div className="auth-step-sub">Full name & email address</div>
+                <div className="auth-step-title">Account &amp; Security</div>
+                <div className="auth-step-sub">Full name, email &amp; password</div>
               </div>
             </div>
             <div className="auth-step-connector"></div>
             <div className={`auth-step-item ${step >= 2 ? 'active' : ''}`}>
               <div className="auth-step-num">2</div>
               <div>
-                <div className="auth-step-title">Contact & Location</div>
-                <div className="auth-step-sub">Mobile number & country</div>
+                <div className="auth-step-title">Contact &amp; Location</div>
+                <div className="auth-step-sub">Mobile number &amp; country</div>
               </div>
             </div>
           </div>
@@ -168,8 +180,8 @@ export default function RegisterPage({ onLogin }) {
             <h1 className="auth-form-title">Create Account</h1>
             <p className="auth-form-subtitle">
               {step === 1
-                ? 'Step 1 of 2 — Your account identity'
-                : 'Step 2 of 2 — Contact details'}
+                ? 'Step 1 of 2 — Set up your name, email and password'
+                : 'Step 2 of 2 — Contact & country details'}
             </p>
           </div>
 
@@ -203,7 +215,7 @@ export default function RegisterPage({ onLogin }) {
                   Email Address *
                   <span className="auth-locked-tag">
                     <Lock size={10} />
-                    Permanent — Cannot be changed
+                    Permanent Identity
                   </span>
                 </label>
                 <input
@@ -216,8 +228,50 @@ export default function RegisterPage({ onLogin }) {
                   required
                 />
                 <span className="auth-field-hint">
-                  Your email is your permanent account identifier and financial ledger key.
+                  Your email is your permanent ledger identity and cannot be changed later.
                 </span>
+              </div>
+
+              <div className="auth-field-group">
+                <label className="auth-label">
+                  <Lock size={14} />
+                  Create Password *
+                </label>
+                <div className="auth-input-wrapper">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
+                    placeholder="At least 6 characters"
+                    className="auth-input"
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="auth-input-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="auth-field-group">
+                <label className="auth-label">
+                  <Lock size={14} />
+                  Confirm Password *
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setErrorMsg(''); }}
+                  placeholder="Re-enter your password"
+                  className="auth-input"
+                  autoComplete="new-password"
+                  required
+                />
               </div>
 
               {errorMsg && (
@@ -310,7 +364,7 @@ export default function RegisterPage({ onLogin }) {
                   maxLength={8}
                 />
                 <span className="auth-field-hint">
-                  Got an invite? Enter the referral code to claim ₨ 50 welcome bonus!
+                  Got an invite? Enter referral code to earn commissions with your team!
                 </span>
               </div>
 
@@ -325,7 +379,7 @@ export default function RegisterPage({ onLogin }) {
                 {isSubmitting ? (
                   <>
                     <span className="auth-spinner"></span>
-                    <span>Creating Account...</span>
+                    <span>Creating Secure Account...</span>
                   </>
                 ) : (
                   <>
